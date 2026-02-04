@@ -13,7 +13,7 @@ app.use(express.json());
 
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer);
-const botWss = new WebSocketServer({ port: 8080 });
+const botWss = new WebSocketServer({ port: 33001 });
 
 const MOCK_CHANNEL_ID = "12345";
 
@@ -116,6 +116,6 @@ botWss.on('connection', (ws) => {
   }));
 });
 
-httpServer.listen(3000, () => {
-  console.log('✅ Chat Server: http://localhost:3000');
+httpServer.listen(33000, () => {
+  console.log('✅ Chat Server: http://localhost:33000');
 });
