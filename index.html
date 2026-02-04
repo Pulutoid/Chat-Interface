@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Twitch Chat Reimagined</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            twitch: { dark: '#18181b', accent: '#9147ff', accentHover: '#772ce8', surface: '#2f2f35' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #3f3f46;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+
+<body class="bg-zinc-950 text-zinc-100 h-[100dvh] w-full flex items-center justify-center overflow-hidden">
+
+  <!-- USERNAME MODAL (Hidden by default) -->
+  <div id="username-modal"
+    class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-twitch-surface p-6 rounded-xl border border-white/10 shadow-2xl w-full max-w-sm mx-4">
+      <h2 class="text-xl font-bold mb-4 text-center">What do you want to be called?</h2>
+      <form id="username-form" class="space-y-4">
+        <input id="username-input" type="text" placeholder="Enter a username..." maxlength="25"
+          class="w-full bg-twitch-dark border border-zinc-700 rounded-lg px-4 py-3 outline-none focus:border-twitch-accent focus:ring-1 focus:ring-twitch-accent transition-all" />
+        <button type="submit"
+          class="w-full bg-twitch-accent hover:bg-twitch-accentHover text-white font-bold py-3 rounded-lg transition-all">
+          Join Chat
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- CHAT CONTAINER -->
+  <div id="chat-container"
+    class="w-full h-full md:h-[85vh] md:w-[450px] lg:w-[500px] bg-twitch-dark md:rounded-2xl md:border md:border-zinc-800 md:shadow-2xl flex flex-col relative overflow-hidden">
+
+    <!-- Header -->
+    <header
+      class="flex-shrink-0 px-4 py-3 bg-twitch-dark border-b border-white/5 flex justify-between items-center z-10 backdrop-blur-sm bg-opacity-95">
+      <div class="flex items-center gap-2">
+        <h1 class="font-semibold text-base tracking-tight text-zinc-100">Stream Chat</h1>
+        <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20">
+          <div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+          <span class="text-[10px] font-bold uppercase text-red-500">Live</span>
+        </div>
+      </div>
+
+      <!-- Editable Username Display -->
+      <button id="change-username-btn"
+        class="text-xs text-zinc-400 hover:text-twitch-accent transition-colors flex items-center gap-1 group">
+        <span id="current-username-display">Guest</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+          class="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <path
+            d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+        </svg>
+      </button>
+    </header>
+
+    <!-- Messages List -->
+    <ul id="messages" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2 scroll-smooth">
+      <li class="text-sm text-zinc-400 p-1 text-center italic opacity-50 select-none">
+        Welcome to the chatroom.
+      </li>
+    </ul>
+
+    <!-- Input Area -->
+    <div class="flex-shrink-0 p-4 bg-twitch-dark border-t border-white/5">
+      <form id="form" class="relative">
+        <div
+          class="flex items-center bg-twitch-surface rounded-lg p-1.5 border border-transparent focus-within:border-twitch-accent focus-within:ring-1 focus-within:ring-twitch-accent transition-all shadow-sm">
+          <input id="input" type="text" autocomplete="off" placeholder="Send a message..."
+            class="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 px-3 py-2 outline-none min-w-0" />
+          <button
+            class="bg-twitch-accent hover:bg-twitch-accentHover text-white text-sm font-semibold px-4 py-2 rounded md:rounded-md transition-all whitespace-nowrap">
+            Chat
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SOCKET LOGIC -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
+
+    // Username Logic
+    const modal = document.getElementById('username-modal');
+    const usernameForm = document.getElementById('username-form');
+    const usernameInput = document.getElementById('username-input');
+    const displayUsername = document.getElementById('current-username-display');
+    const changeUserBtn = document.getElementById('change-username-btn');
+
+    let myUsername = localStorage.getItem('chat_username');
+
+    function updateUsernameUI() {
+      if (!myUsername) {
+        modal.classList.remove('hidden');
+        usernameInput.focus();
+      } else {
+        modal.classList.add('hidden');
+        displayUsername.textContent = myUsername;
+      }
+    }
+
+    // Initial Check
+    updateUsernameUI();
+
+    // Handle Modal Submit
+    usernameForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = usernameInput.value.trim();
+      if (name) {
+        myUsername = name;
+        localStorage.setItem('chat_username', name);
+        updateUsernameUI();
+      }
+    });
+
+    // Handle "Change Username" Click
+    changeUserBtn.addEventListener('click', () => {
+      myUsername = null; // Clear temporarily to trigger modal logic
+      updateUsernameUI();
+    });
+
+    // Helper: Colors
+    const getRandomColor = () => {
+      const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    };
+    const myColor = getRandomColor();
+    const getTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Send Message
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input.value && myUsername) {
+        // We now send an OBJECT with user and text
+        socket.emit('chat message', {
+          user: myUsername,
+          text: input.value,
+          color: myColor
+        });
+        input.value = '';
+      } else if (!myUsername) {
+        updateUsernameUI(); // Force login if they try to hack around it
+      }
+    });
+
+    // Receive Message
+    socket.on('chat message', (data) => {
+      // Data is now { user, text, isBot, color }
+      const li = document.createElement('li');
+      li.className = "group text-sm text-zinc-300 leading-relaxed hover:bg-white/5 p-1 -mx-1 rounded transition-colors break-words";
+
+      // Bot Styling vs User Styling
+      const nameColor = data.isBot ? '#9147ff' : (data.color || '#8b5cf6');
+      const badge = data.isBot ?
+        `<span class="bg-twitch-accent text-white text-[10px] px-1 rounded mr-1 font-bold">BOT</span>` : '';
+
+      li.innerHTML = `
+        <span class="text-xs text-zinc-500 font-mono mr-2 select-none">${getTime()}</span>
+        ${badge}
+        <span class="font-bold cursor-pointer hover:underline" style="color: ${nameColor}">${data.user}:</span>
+        <span class="text-zinc-100">${data.text}</span>
+      `;
+
+      messages.appendChild(li);
+      messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+    });
+  </script>
+</body>
+
+</html>
