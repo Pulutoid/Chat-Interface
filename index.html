@@ -108,10 +108,22 @@
   </div>
 
   <!-- SOCKET LOGIC -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const form = document.getElementById('form');
+   <!-- <script src="/socket.io/socket.io.js"></script>
+-->  
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script>
+    
+const socket = io('http://16.171.16.30:33000');
+// Connect to your AWS IP
+//const socket = io('http://16.171.16.30:33000', {
+  //transports: ['websocket', 'polling']
+//});
+//const io = require('socket.io')(server, {
+//  cors: { origin: "*", methods: ["GET", "POST"] }
+//});
+    
+const form = document.getElementById('form');
     const input = document.getElementById('input');
     const messages = document.getElementById('messages');
 
@@ -154,7 +166,7 @@
       updateUsernameUI();
     });
 
-    // Helper: Colors
+   // Helper: Colors
     const getRandomColor = () => {
       const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899'];
       return colors[Math.floor(Math.random() * colors.length)];
