@@ -18,8 +18,8 @@ const httpServer = createServer(app);
 
 // HTTPS Server (port 33003 - NEW)
 const httpsServer = createHttpsServer({
-  key: fs.readFileSync('/etc/letsencrypt/live/chat.yourdomain.com/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/chat.yourdomain.com/fullchain.pem')
+  key: fs.readFileSync('/etc/letsencrypt/live/chat.abdullah-darwish.com/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/chat.abdullah-darwish.com/fullchain.pem')
 }, app);
 
 // Socket.IO on BOTH servers
