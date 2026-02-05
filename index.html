@@ -93,6 +93,12 @@
 
     <!-- Input Area -->
     <div class="flex-shrink-0 p-4 bg-twitch-dark border-t border-white/5">
+
+      <!-- Quick Actions Container -->
+      <div id="quick-actions" class="flex gap-2 overflow-x-auto scrollbar-hide mb-3 pb-1">
+        <!-- Buttons injected by JS here -->
+      </div>
+
       <form id="form" class="relative">
         <div
           class="flex items-center bg-twitch-surface rounded-lg p-1.5 border border-transparent focus-within:border-twitch-accent focus-within:ring-1 focus-within:ring-twitch-accent transition-all shadow-sm">
@@ -108,96 +114,128 @@
   </div>
 
   <!-- SOCKET LOGIC -->
-   <!-- <script src="/socket.io/socket.io.js"></script>
--->  
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
-<script>
-    
-const socket = io('https://chat.abdullah-darwish.com:33003');
-const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const messages = document.getElementById('messages');
+  <script>
+    const socket = io('http://16.171.16.30:33000');
 
-    // Username Logic
-    const modal = document.getElementById('username-modal');
-    const usernameForm = document.getElementById('username-form');
-    const usernameInput = document.getElementById('username-input');
-    const displayUsername = document.getElementById('current-username-display');
-    const changeUserBtn = document.getElementById('change-username-btn');
+    const form = document.getElementById('form');
+    <script>
 
-    let myUsername = localStorage.getItem('chat_username');
+      const socket = io('https://chat.abdullah-darwish.com:33003');
+      const form = document.getElementById('form');
+      const input = document.getElementById('input');
+      const messages = document.getElementById('messages');
 
-    function updateUsernameUI() {
+      // --- QUICK BUTTON CONFIGURATION ---
+      // Edit this array to change the buttons!
+      const quickButtons = [
+      "Hello everyone!",
+      "LMAO",
+      "GG",
+      "Nice!",
+      "Wait what?",
+      "LOL"
+      ];
+
+      // Generate Quick Buttons
+      const quickActionsContainer = document.getElementById('quick-actions');
+
+    quickButtons.forEach(message => {
+      const btn = document.createElement('button');
+      btn.type = "button";
+      btn.textContent = message;
+
+      btn.className = `
+      flex-shrink-0
+      px-4 py-1.5
+      rounded-full
+      bg-twitch-surface hover:bg-zinc-700
+      border border-white/10 hover:border-twitch-accent
+      text-zinc-200 text-xs font-medium
+      transition-all duration-200
+      whitespace-nowrap
+      `;
+
+      btn.addEventListener('click', () => {
+        input.value = message;
+      input.focus();
+      });
+
+      quickActionsContainer.appendChild(btn);
+    });
+      // ----------------------------------
+
+      // Username Logic
+      const modal = document.getElementById('username-modal');
+      const usernameForm = document.getElementById('username-form');
+      const usernameInput = document.getElementById('username-input');
+      const displayUsername = document.getElementById('current-username-display');
+      const changeUserBtn = document.getElementById('change-username-btn');
+
+      let myUsername = localStorage.getItem('chat_username');
+
+      function updateUsernameUI() {
       if (!myUsername) {
         modal.classList.remove('hidden');
-        usernameInput.focus();
+      usernameInput.focus();
       } else {
         modal.classList.add('hidden');
-        displayUsername.textContent = myUsername;
+      displayUsername.textContent = myUsername;
       }
     }
 
-    // Initial Check
-    updateUsernameUI();
+      updateUsernameUI();
 
-    // Handle Modal Submit
     usernameForm.addEventListener('submit', (e) => {
-      e.preventDefault();
+        e.preventDefault();
       const name = usernameInput.value.trim();
       if (name) {
         myUsername = name;
-        localStorage.setItem('chat_username', name);
-        updateUsernameUI();
+      localStorage.setItem('chat_username', name);
+      updateUsernameUI();
       }
     });
 
-    // Handle "Change Username" Click
     changeUserBtn.addEventListener('click', () => {
-      myUsername = null; // Clear temporarily to trigger modal logic
+        myUsername = null;
       updateUsernameUI();
     });
 
-   // Helper: Colors
     const getRandomColor = () => {
       const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899'];
       return colors[Math.floor(Math.random() * colors.length)];
     };
-    const myColor = getRandomColor();
-    const getTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const myColor = getRandomColor();
+    const getTime = () => new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit' });
 
-    // Send Message
     form.addEventListener('submit', (e) => {
-      e.preventDefault();
+        e.preventDefault();
       if (input.value && myUsername) {
-        // We now send an OBJECT with user and text
         socket.emit('chat message', {
           user: myUsername,
           text: input.value,
           color: myColor
         });
-        input.value = '';
+      input.value = '';
       } else if (!myUsername) {
-        updateUsernameUI(); // Force login if they try to hack around it
+        updateUsernameUI();
       }
     });
 
-    // Receive Message
     socket.on('chat message', (data) => {
-      // Data is now { user, text, isBot, color }
       const li = document.createElement('li');
       li.className = "group text-sm text-zinc-300 leading-relaxed hover:bg-white/5 p-1 -mx-1 rounded transition-colors break-words";
 
-      // Bot Styling vs User Styling
       const nameColor = data.isBot ? '#9147ff' : (data.color || '#8b5cf6');
       const badge = data.isBot ?
-        `<span class="bg-twitch-accent text-white text-[10px] px-1 rounded mr-1 font-bold">BOT</span>` : '';
+      `<span class="bg-twitch-accent text-white text-[10px] px-1 rounded mr-1 font-bold">BOT</span>` : '';
 
       li.innerHTML = `
-        <span class="text-xs text-zinc-500 font-mono mr-2 select-none">${getTime()}</span>
-        ${badge}
-        <span class="font-bold cursor-pointer hover:underline" style="color: ${nameColor}">${data.user}:</span>
-        <span class="text-zinc-100">${data.text}</span>
+      <span class="text-xs text-zinc-500 font-mono mr-2 select-none">${getTime()}</span>
+      ${badge}
+      <span class="font-bold cursor-pointer hover:underline" style="color: ${nameColor}">${data.user}:</span>
+      <span class="text-zinc-100">${data.text}</span>
       `;
 
       messages.appendChild(li);
