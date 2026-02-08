@@ -32,7 +32,7 @@ Even if you host the file locally, it will attempt to open a socket connection t
 
 ## Features
 
-## Frontend (UI)
+### Frontend (UI)
 
 - **Twitch Replica**: Matches the font, colors, and layout of native Twitch chat.
     
