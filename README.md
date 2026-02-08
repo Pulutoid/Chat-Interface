@@ -1,5 +1,9 @@
 # Twitch-Style Chat Simulator & Mock EventSub
 
+Check it here: 
+
+https://api.abdullah-darwish.com/chatInterface
+
 **Source Code / Reference Implementation**
 
 This repository contains the source code for a self-hosted chat application I built to simulate a Twitch chat environment. It is designed to test chatbots and EventSub integrations without needing a live Twitch channel.
@@ -60,7 +64,9 @@ The backend includes a mock implementation of the Twitch Helix API to trick bots
 - `POST /mock/helix/eventsub/subscriptions`: Accepts subscription requests (always returns success).
     
 
+
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
